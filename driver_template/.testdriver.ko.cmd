@@ -1,0 +1,1 @@
+cmd_/home/shilei/workspace/driver_template/testdriver.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/shilei/workspace/driver_template/testdriver.ko /home/shilei/workspace/driver_template/testdriver.o /home/shilei/workspace/driver_template/testdriver.mod.o

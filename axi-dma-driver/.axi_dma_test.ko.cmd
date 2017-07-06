@@ -1,0 +1,1 @@
+cmd_/home/shilei/workspace/axi-dma-driver/axi_dma_test.ko := arm-xilinx-linux-gnueabi-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/shilei/workspace/axi-dma-driver/axi_dma_test.ko /home/shilei/workspace/axi-dma-driver/axi_dma_test.o /home/shilei/workspace/axi-dma-driver/axi_dma_test.mod.o
