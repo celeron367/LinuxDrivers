@@ -112,23 +112,33 @@ static int my_strcmp(const char *str1, const char *str2)
   return (0);
 }
 
+
+
 static int dmaSynchMM2S(struct ds_axidma_device *obj_dev){
     //  sleep(6);
     //  return;
 
     unsigned int mm2s_status = ioread32(obj_dev->virt_bus_addr + MM2S_DMASR);
-    while(!(mm2s_status & 1<<12) || !(mm2s_status & 1<<1) ){
+    int count=0;
+    printk(KERN_INFO "MM2S_DMASR reg value is <%X> \n", mm2s_status);
+    while( !(mm2s_status & 1) || count>1000){//"!(mm2s_status & 1<<12) || !(mm2s_status & 1<<1)"
         mm2s_status = ioread32(obj_dev->virt_bus_addr + MM2S_DMASR);
-
+        count++;
     }
+    printk(KERN_INFO "MM2S_DMASR reg value is <%X> \n", mm2s_status);
     return 0;
 }
 
 static int dmaSynchS2MM(struct ds_axidma_device *obj_dev){
     unsigned int s2mm_status = ioread32(obj_dev->virt_bus_addr + S2MM_DMASR);
-    while(!(s2mm_status & 1<<12) || !(s2mm_status & 1<<1)){
+    int count=0;
+    printk(KERN_INFO "S2MM_DMASR reg value is <%X> \n", s2mm_status);
+    while(!(s2mm_status & 1)||count>1000){//"!(s2mm_status & 1<<12) || !(s2mm_status & 1<<1)"
         s2mm_status = ioread32(obj_dev->virt_bus_addr + S2MM_DMASR);
+        count++;
     }
+    printk(KERN_INFO "S2MM_DMASR reg value is <%X> \n", s2mm_status);
+
     return 0;
 }
 
@@ -163,9 +173,24 @@ static ssize_t ds_axidma_read(struct file *f, char __user * buf, size_t
         return 0;
     }
     obj_dev = get_elem_from_list_by_inode(f->f_inode);
+
+    printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
+    printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
+    printk(KERN_INFO "S2MM_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMASR));
+    printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
+
     iowrite32(1, obj_dev->virt_bus_addr + S2MM_DMACR);
     iowrite32(obj_dev->ds_axidma_handle, obj_dev->virt_bus_addr + S2MM_DA);
     iowrite32(len, obj_dev->virt_bus_addr + S2MM_LENGTH);
+
+    int num=0;
+    while(num>100000){num++;}
+
+    printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
+    printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
+    printk(KERN_INFO "S2MM_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMASR));
+    printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
+    //busydely(1000000);
     //dmaSynchS2MM(obj_dev);
     memcpy(buf, obj_dev->ds_axidma_addr, len);
     return len;
@@ -185,23 +210,29 @@ static ssize_t ds_axidma_write(struct file *f, const char __user * buf,
     obj_dev = get_elem_from_list_by_inode(f->f_inode);
     memcpy(obj_dev->ds_axidma_addr, buf, len);
 
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + MM2S_DMASR));
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + MM2S_DMACR));
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + S2MM_DMASR));
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + S2MM_DMACR));
+    printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
+    printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
+    printk(KERN_INFO "S2MM_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMASR));
+    printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
 
     iowrite32(1, obj_dev->virt_bus_addr + MM2S_DMACR);
     iowrite32(obj_dev->ds_axidma_handle, obj_dev->virt_bus_addr + MM2S_SA);
     iowrite32(len, obj_dev->virt_bus_addr + MM2S_LENGTH);
 
-    // dmaSynchMM2S(obj_dev);
+    int num=0;
+    while(num>100000){num++;}
 
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + MM2S_DMASR));
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + MM2S_DMACR));
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + S2MM_DMASR));
-    // printk(KERN_INFO "%X\n", ioread32(virt_bus_addr + S2MM_DMACR));
-    // printk(KERN_INFO "%X\n", bus_addr);
-    // printk(KERN_INFO "%lu\n", bus_size);
+
+    printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
+    printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
+    printk(KERN_INFO "S2MM_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMASR));
+    printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
+    //busydely(1000000);
+    //dmaSynchMM2S(obj_dev);
+
+
+    //printk(KERN_INFO "%X\n", bus_addr);
+    //printk(KERN_INFO "%lu\n", bus_size);
 
     return len;
 }
