@@ -22,19 +22,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: driver_template
+all: testeclipse
 
 # Tool invocations
-driver_template: $(OBJS) $(USER_OBJS)
+testeclipse: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc  -o "driver_template" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc  -o "testeclipse" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) driver_template
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) testeclipse
 	-@echo ' '
 
 .PHONY: all clean dependents

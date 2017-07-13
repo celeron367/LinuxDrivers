@@ -1,8 +1,8 @@
 PWD = $(shell pwd)  
-KERNEL_SRC = /lib/modules/4.8.0-36-generic/build 
+#KERNEL_SRC = /home/shilei/zybo-linux/Linux-Digilent-Dev-master 
    
-obj-m := testdriver.o  
-module-objs := testdriver.o  
+obj:= axi_dma_test.o  
+#module-objs := axi_dma_test.o  
    
 all:  
 	       $(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules  

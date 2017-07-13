@@ -4,13 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../testdriver.c 
+../test.c 
 
 OBJS += \
-./testdriver.o 
+./test.o 
 
 C_DEPS += \
-./testdriver.d 
+./test.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

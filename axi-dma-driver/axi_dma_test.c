@@ -55,8 +55,10 @@ struct ds_axidma_device
     dev_t dev_num;
     const char *dev_name;
     struct cdev c_dev;
-    char *ds_axidma_addr;
-    dma_addr_t ds_axidma_handle;
+    char *ds_axidma_addr1;
+    char *ds_axidma_addr2;
+    dma_addr_t ds_axidma_handle1;
+    dma_addr_t ds_axidma_handle2;
 
     struct list_head dev_list;
 };
@@ -133,9 +135,8 @@ static int dmaSynchS2MM(struct ds_axidma_device *obj_dev){
     unsigned int s2mm_status = ioread32(obj_dev->virt_bus_addr + S2MM_DMASR);
     int count=0;
     printk(KERN_INFO "S2MM_DMASR reg value is <%X> \n", s2mm_status);
-    while(!(s2mm_status & 1)||count>1000){//"!(s2mm_status & 1<<12) || !(s2mm_status & 1<<1)"
+    while(!(s2mm_status & 1<<1)||!(s2mm_status & 1<<12)){//"!(s2mm_status & 1<<12) || !(s2mm_status & 1<<1)"
         s2mm_status = ioread32(obj_dev->virt_bus_addr + S2MM_DMASR);
-        count++;
     }
     printk(KERN_INFO "S2MM_DMASR reg value is <%X> \n", s2mm_status);
 
@@ -151,6 +152,9 @@ static int ds_axidma_open(struct inode *i, struct file *f)
         return -1;
     }
     obj_dev->virt_bus_addr = (char *) ioremap_nocache(obj_dev->bus_addr, obj_dev->bus_size);
+    //----axi dma reset-----------------------------------------------------
+    iowrite32(0x0004, obj_dev->virt_bus_addr + S2MM_DMACR);
+    iowrite32(0x0004, obj_dev->virt_bus_addr + MM2S_DMACR);
     return 0;
 }
 
@@ -177,22 +181,20 @@ static ssize_t ds_axidma_read(struct file *f, char __user * buf, size_t
     printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
     printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
     printk(KERN_INFO "S2MM_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMASR));
-    printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
+    printk(KERN_INFO "S2MM_DMACR:%X\n\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
 
     iowrite32(1, obj_dev->virt_bus_addr + S2MM_DMACR);
-    iowrite32(obj_dev->ds_axidma_handle, obj_dev->virt_bus_addr + S2MM_DA);
+    iowrite32(obj_dev->ds_axidma_handle2, obj_dev->virt_bus_addr + S2MM_DA);
     iowrite32(len, obj_dev->virt_bus_addr + S2MM_LENGTH);
-
-    int num=0;
-    while(num>100000){num++;}
 
     printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
     printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
     printk(KERN_INFO "S2MM_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMASR));
-    printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
-    //busydely(1000000);
+    printk(KERN_INFO "S2MM_DMACR:%X\n\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
+
+
     //dmaSynchS2MM(obj_dev);
-    memcpy(buf, obj_dev->ds_axidma_addr, len);
+    //memcpy(buf, obj_dev->ds_axidma_addr2, len);
     return len;
 }
 
@@ -208,7 +210,7 @@ static ssize_t ds_axidma_write(struct file *f, const char __user * buf,
     }
 
     obj_dev = get_elem_from_list_by_inode(f->f_inode);
-    memcpy(obj_dev->ds_axidma_addr, buf, len);
+    memcpy(obj_dev->ds_axidma_addr1, buf, len);
 
     printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
     printk(KERN_INFO "MM2S_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMACR));
@@ -216,11 +218,11 @@ static ssize_t ds_axidma_write(struct file *f, const char __user * buf,
     printk(KERN_INFO "S2MM_DMACR:%X\n", ioread32(obj_dev->virt_bus_addr + S2MM_DMACR));
 
     iowrite32(1, obj_dev->virt_bus_addr + MM2S_DMACR);
-    iowrite32(obj_dev->ds_axidma_handle, obj_dev->virt_bus_addr + MM2S_SA);
+    iowrite32(obj_dev->ds_axidma_handle1, obj_dev->virt_bus_addr + MM2S_SA);
     iowrite32(len, obj_dev->virt_bus_addr + MM2S_LENGTH);
 
-    int num=0;
-    while(num>100000){num++;}
+    //int num=0;
+    //while(num>100000){num++;}
 
 
     printk(KERN_INFO "MM2S_DMASR:%X\n", ioread32(obj_dev->virt_bus_addr + MM2S_DMASR));
@@ -279,8 +281,10 @@ static int ds_axidma_pdrv_probe(struct platform_device *pdev)
 
     printk(KERN_INFO "DMA_LENGTH = %u \n", DMA_LENGTH);
     /* allocate mmap area */
-    obj_dev->ds_axidma_addr =
-        dma_zalloc_coherent(NULL, DMA_LENGTH, &(obj_dev->ds_axidma_handle), GFP_KERNEL);
+    obj_dev->ds_axidma_addr1 =
+        dma_zalloc_coherent(NULL, DMA_LENGTH, &(obj_dev->ds_axidma_handle1), GFP_KERNEL);
+    obj_dev->ds_axidma_addr2 =
+            dma_zalloc_coherent(NULL, DMA_LENGTH, &(obj_dev->ds_axidma_handle2), GFP_KERNEL);
     list_add( &obj_dev->dev_list, &full_dev_list );
     return 0;
 }
@@ -299,8 +303,11 @@ static int ds_axidma_pdrv_remove(struct platform_device *pdev)
             device_destroy(cl, obj_dev->dev_num);
             unregister_chrdev_region(obj_dev->dev_num, 1);
             /* free mmap area */
-            if (obj_dev->ds_axidma_addr) {
-                dma_free_coherent(NULL, DMA_LENGTH, obj_dev->ds_axidma_addr, obj_dev->ds_axidma_handle);
+            if (obj_dev->ds_axidma_addr1) {
+                dma_free_coherent(NULL, DMA_LENGTH, obj_dev->ds_axidma_addr1, obj_dev->ds_axidma_handle1);
+            }
+            if (obj_dev->ds_axidma_addr2) {
+                dma_free_coherent(NULL, DMA_LENGTH, obj_dev->ds_axidma_addr2, obj_dev->ds_axidma_handle2);
             }
             kfree(obj_dev);
             break;

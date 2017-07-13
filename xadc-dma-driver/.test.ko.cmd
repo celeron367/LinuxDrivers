@@ -1,0 +1,1 @@
+cmd_/home/shilei/workspace/testeclipse/test.ko := arm-xilinx-linux-gnueabi-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/shilei/workspace/testeclipse/test.ko /home/shilei/workspace/testeclipse/test.o /home/shilei/workspace/testeclipse/test.mod.o

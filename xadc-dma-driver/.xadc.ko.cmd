@@ -1,0 +1,1 @@
+cmd_/home/shilei/workspace/xadc-dma-driver/xadc.ko := arm-xilinx-linux-gnueabi-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/shilei/workspace/xadc-dma-driver/xadc.ko /home/shilei/workspace/xadc-dma-driver/xadc.o /home/shilei/workspace/xadc-dma-driver/xadc.mod.o
